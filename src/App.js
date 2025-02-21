@@ -7,16 +7,32 @@ import './styles/buttons.css';  // Import the CSS file
 import MahkumlarPage from './pages/MahkumlarPage';
 import HakkimizdaPage from './pages/HakkimizdaPage';  // Import ekleyelim
 import logo from './assets/logo.png'; // Logo import
-import { ethers } from 'ethers';
 import { DonationProvider } from './context/DonationContext';
+import Home from './pages/HomePage';
+import { ethers } from 'ethers';
+
+const UNIT0_TESTNET = {
+  chainId: '88817',
+  chainName: 'UNIT0 Testnet',
+  nativeCurrency: {
+    name: 'UNIT0',
+    symbol: 'UNIT0',
+    decimals: 18
+  },
+  rpcUrls: ['https://rpc-testnet.unit0.dev'],
+  blockExplorerUrls: ['https://testnet.unit0.dev']
+};
 
 function App() {
   const [displayedAmount, setDisplayedAmount] = useState(0);
   const totalAmount = 6525;
-  const [account, setAccount] = useState('');
+  const [account, setAccount] = useState(null);
   const [wavesAccount, setWavesAccount] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
+  const [userAddress, setUserAddress] = useState("");
+  const [signer, setSigner] = useState("");
+
   // Link stili tanımı
   const linkStyle = {
     color: '#ccd6f6',
@@ -60,62 +76,61 @@ function App() {
     };
   }, [totalAmount]);
 
-  // MetaMask bağlantı fonksiyonu
+  // MetaMask hesap değişikliğini dinle
+  useEffect(() => {
+    if (window.ethereum) {
+      window.ethereum.on('accountsChanged', (accounts) => {
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+        } else {
+          setAccount(null);
+        }
+      });
+    }
+  }, []);
+
+  // Basit MetaMask bağlantı fonksiyonu
   const connectMetaMask = async () => {
-    try {
-      if (window.ethereum) {
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        
-        // Hesap izni iste
-        await window.ethereum.request({
-          method: "wallet_requestPermissions",
-          params: [{
-            eth_accounts: {}
-          }]
-        });
-        
+    if (window.ethereum) {
+      try {
+        // MetaMask hesap bağlantısı
         const accounts = await window.ethereum.request({
           method: 'eth_requestAccounts'
         });
         
-        if (accounts.length > 0) {
+        // İmza için provider ve signer oluştur
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        
+        // İmza mesajı
+        const message = "Mahkum Bağış Platformu'na hoş geldiniz! Bu imza ile platformumuza bağlanmayı onaylıyorsunuz.";
+        
+        try {
+          // İmza iste
+          const signature = await signer.signMessage(message);
+          console.log("İmza başarılı:", signature);
+          
+          // İmza başarılıysa hesabı kaydet
           setAccount(accounts[0]);
-          setIsMenuOpen(false);
+        } catch (signError) {
+          console.error("İmza hatası:", signError);
+          alert("Bağlantı için lütfen mesajı imzalayın.");
+          setAccount(null);
         }
-      } else {
-        alert('Lütfen MetaMask yükleyin!');
-      }
-    } catch (error) {
-      console.error('MetaMask bağlantı hatası:', error);
-      if (error.code === 4001) {
-        alert('Bağlantı reddedildi. Lütfen MetaMask bağlantısını onaylayın.');
-      } else {
-        alert('Bağlantı hatası oluştu. Lütfen tekrar deneyin.');
-      }
-    }
-  };
 
-  // WavesKeeper bağlantı fonksiyonu
-  const connectWavesKeeper = async () => {
-    try {
-      if (window.WavesKeeper) {
-        const state = await window.WavesKeeper.initialPromise;
-        const wavesState = await window.WavesKeeper.publicState();
-        setWavesAccount(wavesState.account.address);
-        setIsMenuOpen(false);
-      } else {
-        alert('Lütfen WavesKeeper uzantısını yükleyin!');
+      } catch (error) {
+        console.error('Bağlantı hatası:', error);
+        alert('MetaMask bağlantısında bir hata oluştu.');
       }
-    } catch (error) {
-      console.error('WavesKeeper bağlantı hatası:', error);
-      alert('WavesKeeper bağlantı hatası oluştu. Lütfen tekrar deneyin.');
+    } else {
+      alert('Lütfen MetaMask yükleyin!');
     }
   };
 
   // Çıkış yapma fonksiyonu - düzeltildi
   const disconnectWallet = () => {
     // MetaMask çıkış
-    setAccount('');
+    setAccount(null);
 
     // WavesKeeper çıkış
     if (window.WavesKeeper) {
@@ -199,202 +214,84 @@ function App() {
               top: '50%',
               transform: 'translateY(-50%)'
             }}>
-              {account || wavesAccount ? (
-                <div style={{ position: 'relative' }}>
-                  <div
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    style={{
-                      color: '#64ffda',
-                      padding: '8px 15px',
-                      border: '1px solid #64ffda',
-                      borderRadius: '4px',
-                      fontSize: '14px',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.backgroundColor = 'rgba(100, 255, 218, 0.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.backgroundColor = 'transparent';
-                    }}
-                  >
-                    {account ? `ETH: ${account.slice(0, 6)}...${account.slice(-4)}` : ''}
-                    {account && wavesAccount ? ' | ' : ''}
-                    {wavesAccount ? `WAVES: ${wavesAccount.slice(0, 6)}...${wavesAccount.slice(-4)}` : ''}
-                  </div>
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  style={{
+                    backgroundColor: 'transparent',
+                    border: '1px solid #64ffda',
+                    color: '#64ffda',
+                    padding: '10px 20px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  {account || wavesAccount ? 'Bağlı' : 'Giriş Yap'}
+                </button>
 
-                  {/* Bağlı Durumdaki Dropdown */}
-                  {isMenuOpen && (
-                    <>
-                      <div
+                {isMenuOpen && (
+                  <div style={{
+                    position: 'absolute',
+                    right: 0,
+                    top: '100%',
+                    marginTop: '10px',
+                    backgroundColor: '#112240',
+                    border: '1px solid rgba(100, 255, 218, 0.2)',
+                    borderRadius: '4px',
+                    padding: '10px',
+                    minWidth: '200px',
+                    zIndex: 1000,
+                    boxShadow: '0 10px 30px -10px rgba(2,12,27,0.7)'
+                  }}>
+                    {account || wavesAccount ? (
+                      <button
+                        onClick={disconnectWallet}
                         style={{
-                          position: 'fixed',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          zIndex: 998
+                          width: '100%',
+                          padding: '10px',
+                          backgroundColor: 'transparent',
+                          border: 'none',
+                          color: '#64ffda',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                          fontSize: '14px',
+                          display: 'flex',
+                          alignItems: 'center'
                         }}
-                        onClick={() => setIsMenuOpen(false)}
-                      />
-                      <div style={{
-                        position: 'absolute',
-                        top: 'calc(100% + 10px)',
-                        right: 0,
-                        backgroundColor: '#112240',
-                        border: '1px solid rgba(100, 255, 218, 0.2)',
-                        borderRadius: '8px',
-                        padding: '10px',
-                        minWidth: '200px',
-                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-                        zIndex: 999
-                      }}>
-                        <button
-                          onClick={disconnectWallet}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            width: '100%',
-                            padding: '12px 15px',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '4px',
-                            color: '#ff6b6b',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s',
-                            fontSize: '14px',
-                            fontWeight: '500'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = 'transparent';
-                          }}
-                        >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                            <polyline points="16 17 21 12 16 7" />
-                            <line x1="21" y1="12" x2="9" y2="12" />
-                          </svg>
-                          Çıkış Yap
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div style={{ position: 'relative' }}>
-                  <button
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="cyber-button"
-                    style={{
-                      padding: '8px 15px',
-                      fontSize: '14px'
-                    }}
-                  >
-                    Giriş Yap
-                  </button>
-
-                  {/* Giriş Dropdown Menüsü */}
-                  {isMenuOpen && (
-                    <>
-                      <div
-                        style={{
-                          position: 'fixed',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          zIndex: 998
-                        }}
-                        onClick={() => setIsMenuOpen(false)}
-                      />
-                      <div style={{
-                        position: 'absolute',
-                        top: 'calc(100% + 10px)',
-                        right: 0,
-                        backgroundColor: '#112240',
-                        border: '1px solid rgba(100, 255, 218, 0.2)',
-                        borderRadius: '8px',
-                        padding: '10px',
-                        minWidth: '200px',
-                        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
-                        zIndex: 999
-                      }}>
-                        {/* MetaMask Bağlantı Butonu */}
+                      >
+                        Çıkış Yap
+                      </button>
+                    ) : (
+                      <>
                         <button
                           onClick={connectMetaMask}
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
                             width: '100%',
-                            padding: '12px 15px',
+                            padding: '10px',
                             backgroundColor: 'transparent',
                             border: 'none',
-                            borderRadius: '4px',
                             color: '#64ffda',
                             cursor: 'pointer',
-                            transition: 'all 0.3s',
+                            textAlign: 'left',
                             fontSize: '14px',
-                            fontWeight: '500',
-                            marginBottom: '8px'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = 'rgba(100, 255, 218, 0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = 'transparent';
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px'
                           }}
                         >
                           <img 
-                            src="https://raw.githubusercontent.com/MetaMask/brand-resources/master/SVG/metamask-fox.svg"
+                            src="https://upload.wikimedia.org/wikipedia/commons/3/36/MetaMask_Fox.svg" 
                             alt="MetaMask"
-                            style={{ width: '24px', height: '24px' }}
+                            style={{ width: '20px', height: '20px' }}
                           />
                           MetaMask ile Bağlan
                         </button>
-
-                        {/* WavesKeeper Bağlantı Butonu */}
-                        <button
-                          onClick={connectWavesKeeper}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            width: '100%',
-                            padding: '12px 15px',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            borderRadius: '4px',
-                            color: '#64ffda',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s',
-                            fontSize: '14px',
-                            fontWeight: '500'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.target.style.backgroundColor = 'rgba(100, 255, 218, 0.1)';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.target.style.backgroundColor = 'transparent';
-                          }}
-                        >
-                          <img 
-                            src="https://docs.waves.tech/img/logo.svg"
-                            alt="WavesKeeper"
-                            style={{ width: '24px', height: '24px' }}
-                          />
-                          WavesKeeper ile Bağlan
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </header>
           

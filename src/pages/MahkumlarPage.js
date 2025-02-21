@@ -6,6 +6,7 @@ import mahkum3Foto from '../assets/mahkum3Foto.png';
 import mahkum4Foto from '../assets/mahkum4Foto.png';
 import mahkum5Foto from '../assets/mahkum5Foto.png';
 import { useDonation } from '../context/DonationContext';
+import { ethers } from 'ethers';
 
 const MahkumlarPage = () => {
   const { mahkumlarDonations, updateDonation } = useDonation();
@@ -16,6 +17,7 @@ const MahkumlarPage = () => {
   const [wavesBalance, setWavesBalance] = useState('0');
   const [isProcessing, setIsProcessing] = useState(false);
   const WAVES_PRICE = 1.70; // 1 WAVES = 1.70 USDT
+  const DONATION_ADDRESS = "0x5B121c3E0ED268c6aFe0f8E7b3bdDE5375086DB2"; // Bağış adresini buraya girin
 
   const mahkumlar = [
     {
@@ -32,7 +34,7 @@ const MahkumlarPage = () => {
         { isim: "Mehmet K.", yorum: "Ahmet her zaman düzenli ve saygılı bir koğuş arkadaşı oldu. Kendini geliştirmek için sürekli kitap okur." },
         { isim: "Ali R.", yorum: "Cezaevi kütüphanesinde birlikte çalışıyoruz. Çok yardımsever ve çalışkan biri." }
       ],
-      wavesAddress: '3N1KsBqwMRiV5PJqUzqxVrGqLVGz3mZmZKE', // Örnek testnet adresi
+      metamaskAddress: '0x5B121c3E0ED268c6aFe0f8E7b3bdDE5375086DB2',
     },
     {
       id: 2,
@@ -47,7 +49,8 @@ const MahkumlarPage = () => {
       yorumlar: [
         { isim: "Hasan Y.", yorum: "Mehmet Bey çok düzgün bir insan. Koğuşta herkese yardımcı olur." },
         { isim: "İbrahim D.", yorum: "Cezaevi spor aktivitelerinde her zaman pozitif enerji yayar." }
-      ]
+      ],
+      metamaskAddress: '0x5B121c3E0ED268c6aFe0f8E7b3bdDE5375086DB2',
     },
     {
       id: 3,
@@ -62,7 +65,8 @@ const MahkumlarPage = () => {
       yorumlar: [
         { isim: "Osman T.", yorum: "Ali Bey cezaevi meslek kurslarında eğitmenlik yapıyor. Herkes kendisinden çok memnun." },
         { isim: "Mustafa Ş.", yorum: "Koğuşumuzun en düzenli ve saygılı insanlarından biri." }
-      ]
+      ],
+      metamaskAddress: '0x5B121c3E0ED268c6aFe0f8E7b3bdDE5375086DB2',
     },
     {
       id: 4,
@@ -77,7 +81,8 @@ const MahkumlarPage = () => {
       yorumlar: [
         { isim: "Fatma H.", yorum: "Ayşe Hanım cezaevi el işi atölyesinde çok başarılı işler çıkarıyor." },
         { isim: "Zeynep K.", yorum: "Hastalığına rağmen her zaman pozitif ve yardımsever biri." }
-      ]
+      ],
+      metamaskAddress: '0x5B121c3E0ED268c6aFe0f8E7b3bdDE5375086DB2',
     },
     {
       id: 5,
@@ -92,7 +97,8 @@ const MahkumlarPage = () => {
       yorumlar: [
         { isim: "Fatih A.", yorum: "Eyüp Bey cezaevi mutfağında çalışıyor ve herkesin takdirini kazanıyor." },
         { isim: "Ahmet F.", yorum: "Çok çalışkan ve azimli biri. Sürekli yeni şeyler öğrenmeye çalışıyor." }
-      ]
+      ],
+      metamaskAddress: '0x5B121c3E0ED268c6aFe0f8E7b3bdDE5375086DB2',
     }
   ];
 
@@ -133,46 +139,62 @@ const MahkumlarPage = () => {
   };
 
   // Waves testnet için bağış yapma fonksiyonu
-  const handleDonate = async () => {
-    if (!window.WavesKeeper) {
-      alert('Lütfen WavesKeeper uzantısını yükleyin!');
+  const handleDonate = async (mahkumId, mahkumName) => {
+    if (!donationAmount) {
+      alert('Lütfen bağış miktarı girin');
       return;
     }
 
-    try {
-      setIsProcessing(true);
+    if (typeof window.ethereum !== 'undefined') {
+      try {
+        setIsProcessing(true);
 
-      const tx = {
-        type: 4,
-        data: {
-          amount: {
-            assetId: 'WAVES',
-            tokens: wavesAmount // WAVES miktarı
-          },
-          fee: {
-            assetId: 'WAVES',
-            tokens: '0.001'
-          },
-          recipient: '3MtZPopGzT4MXae19GpFWAeGN94zHRaFhYn'
+        // Provider ve signer oluştur
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        
+        // Önce hesap bağlantısını iste
+        await window.ethereum.request({
+          method: 'eth_requestAccounts'
+        });
+        
+        const signer = provider.getSigner();
+
+        // Bağış miktarını wei'ye çevir
+        const amountInWei = ethers.utils.parseEther(donationAmount);
+
+        // Transaction gönder
+        const tx = await signer.sendTransaction({
+          to: DONATION_ADDRESS,
+          value: amountInWei,
+          gasLimit: 21000
+        });
+
+        console.log('Transaction gönderildi:', tx.hash);
+        
+        // Transaction onayını bekle
+        const receipt = await tx.wait();
+        console.log('Transaction onaylandı:', receipt);
+
+        // Bağış miktarını güncelle
+        updateDonation(mahkumId, parseFloat(donationAmount));
+        
+        alert(`${mahkumName} için ${donationAmount} UNIT0 bağışınız başarıyla gönderildi!`);
+        setDonationAmount('');
+
+      } catch (error) {
+        console.error('Bağış hatası:', error);
+        if (error.code === 4001) {
+          alert('İşlem reddedildi.');
+        } else if (error.code === -32603) {
+          alert('Yetersiz bakiye.');
+        } else {
+          alert('Bağış gönderilirken bir hata oluştu.');
         }
-      };
-
-      const txData = await window.WavesKeeper.signAndPublishTransaction(tx);
-      console.log('Transaction sent:', txData);
-
-      // Bağış miktarını güncelle (USDT değeri olarak)
-      updateDonation(selectedMahkum.id, parseFloat(donationAmount));
-
-      alert('Bağış başarıyla gerçekleşti!');
-      setIsDonateModalOpen(false);
-      setDonationAmount('');
-      setWavesAmount('');
-
-    } catch (error) {
-      console.error('Bağış hatası:', error);
-      alert('Bağış işlemi başarısız oldu. Lütfen tekrar deneyin.');
-    } finally {
-      setIsProcessing(false);
+      } finally {
+        setIsProcessing(false);
+      }
+    } else {
+      alert('Lütfen MetaMask yükleyin!');
     }
   };
 
@@ -724,7 +746,7 @@ const MahkumlarPage = () => {
 
             {/* Güncellenmiş Bağış Yap Butonu */}
             <button
-              onClick={handleDonate}
+              onClick={() => handleDonate(selectedMahkum.id, selectedMahkum.name)}
               disabled={isProcessing}
               style={{
                 width: '100%',

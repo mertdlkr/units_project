@@ -3,15 +3,14 @@ import React, { createContext, useState, useContext } from 'react';
 const DonationContext = createContext();
 
 export function DonationProvider({ children }) {
-  // Toplam bağış miktarını sabit olarak ayarla
   const [totalDonations] = useState(6525);
   
   const [mahkumlarDonations, setMahkumlarDonations] = useState({
-    1: 5500, // Birinci mahkum
-    2: 250,  // İkinci mahkum
-    3: 575,  // Üçüncü mahkum
-    4: 125,  // Dördüncü mahkum
-    5: 75    // Beşinci mahkum
+    1: 5500,
+    2: 250,
+    3: 575,
+    4: 125,
+    5: 75
   });
 
   const updateDonation = (mahkumId, amount) => {
@@ -31,4 +30,4 @@ export function DonationProvider({ children }) {
 
 export function useDonation() {
   return useContext(DonationContext);
-} 
+}
