@@ -1,13 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/buttons.css';
 import mahkum1Foto from '../assets/mahkum1Foto.png';
 import mahkum2Foto from '../assets/mahkum2Foto.png';
 import mahkum3Foto from '../assets/mahkum3Foto.png';
 import mahkum4Foto from '../assets/mahkum4Foto.png';
 import mahkum5Foto from '../assets/mahkum5Foto.png';
+import { useDonation } from '../context/DonationContext';
 
 const MahkumlarPage = () => {
+  const { mahkumlarDonations, updateDonation } = useDonation();
   const [selectedMahkum, setSelectedMahkum] = useState(null);
+  const [isDonateModalOpen, setIsDonateModalOpen] = useState(false);
+  const [donationAmount, setDonationAmount] = useState('');
+  const [wavesAmount, setWavesAmount] = useState('');
+  const [wavesBalance, setWavesBalance] = useState('0');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const WAVES_PRICE = 1.70; // 1 WAVES = 1.70 USDT
 
   const mahkumlar = [
     {
@@ -15,7 +23,7 @@ const MahkumlarPage = () => {
       name: "Ahmet Yılmaz",
       image: mahkum1Foto,
       description: "Kader Mahkumu - Dolandırıcılık suçundan 3 yıl hapis cezası",
-      detailedDescription: "Kader mahkumu Ahmet Yılmaz, 2021 yılında işlediği dolandırıcılık suçundan dolayı 3 yıl hapis cezasına çarptırıldı. Ailesini geçindirmek için yanlış bir karar verdiğini ve pişman olduğunu belirtiyor.",
+      detailedDescription: "Kader mahkumu Ahmet Yılmaz, 2021 yılında işlediği dolandırıcılık suçundan dolayı 3 yıl hapis cezasına çarptırıldı. Ailesini geçindirmek için yanlış bir karar verdiğini ve pişman olduğunu belirtiyor. Eski Meslek: Boyacı",
       amount: 5500,
       targetAmount: 10000,
       uyumSkoru: 85,
@@ -23,14 +31,15 @@ const MahkumlarPage = () => {
       yorumlar: [
         { isim: "Mehmet K.", yorum: "Ahmet her zaman düzenli ve saygılı bir koğuş arkadaşı oldu. Kendini geliştirmek için sürekli kitap okur." },
         { isim: "Ali R.", yorum: "Cezaevi kütüphanesinde birlikte çalışıyoruz. Çok yardımsever ve çalışkan biri." }
-      ]
+      ],
+      wavesAddress: '3N1KsBqwMRiV5PJqUzqxVrGqLVGz3mZmZKE', // Örnek testnet adresi
     },
     {
       id: 2,
       name: "Mehmet Demir",
       image: mahkum2Foto,
       description: "Maddi hasarlı trafik kazası tazminatı",
-      detailedDescription: "Geçirdiği trafik kazası sonucu oluşan maddi hasarı karşılayamadığı için hapis cezası aldı. Sigorta ve tazminat ödemelerini yapabilmek için yardıma ihtiyacı var.",
+      detailedDescription: "Geçirdiği trafik kazası sonucu oluşan maddi hasarı karşılayamadığı için hapis cezası aldı. Sigorta ve tazminat ödemelerini yapabilmek için yardıma ihtiyacı var. Eski Meslek: Tesisatçı",
       amount: 250,
       targetAmount: 10000,
       uyumSkoru: 92,
@@ -45,7 +54,7 @@ const MahkumlarPage = () => {
       name: "Ali Kaya",
       image: mahkum3Foto,
       description: "Çek ödemesi için destek talebi",
-      detailedDescription: "İşletmesinin zor zamanlarında karşılıksız çek vermek zorunda kaldı. Borcunu ödemek ve özgürlüğüne kavuşmak için desteğinizi bekliyor.",
+      detailedDescription: "İşletmesinin zor zamanlarında karşılıksız çek vermek zorunda kaldı. Borcunu ödemek ve özgürlüğüne kavuşmak için desteğinizi bekliyor. Eski Meslek: İşletme sahibi",
       amount: 125,
       targetAmount: 10000,
       uyumSkoru: 88,
@@ -60,7 +69,7 @@ const MahkumlarPage = () => {
       name: "Ayşe Yıldız",
       image: mahkum4Foto,
       description: "Sağlık masrafları için yardım talebi",
-      detailedDescription: "Kronik hastalığı nedeniyle ihtiyaç duyduğu ilaçları karşılayamadığı için borçlandı ve hapis cezası aldı. Sağlık masraflarını karşılayabilmek için yardıma ihtiyacı var.",
+      detailedDescription: "Kronik hastalığı nedeniyle ihtiyaç duyduğu ilaçları karşılayamadığı için borçlandı ve hapis cezası aldı. Sağlık masraflarını karşılayabilmek için yardıma ihtiyacı var. Eski Meslek: Hemşire",
       amount: 175,
       targetAmount: 10000,
       uyumSkoru: 95,
@@ -75,7 +84,7 @@ const MahkumlarPage = () => {
       name: "Eyüp Uzun",
       image: mahkum5Foto,
       description: "İcra borcu için destek bekliyor",
-      detailedDescription: "Ekonomik kriz döneminde işini kaybetti ve birikmiş borçlarını ödeyemedi. İcra takibi sonucu hapis cezası aldı. Ailesine kavuşabilmek için desteğinizi bekliyor.",
+      detailedDescription: "Ekonomik kriz döneminde işini kaybetti ve birikmiş borçlarını ödeyemedi. İcra takibi sonucu hapis cezası aldı. Ailesine kavuşabilmek için desteğinizi bekliyor. Eski Meslek: Muhasebeci",
       amount: 200,
       targetAmount: 10000,
       uyumSkoru: 91,
@@ -86,6 +95,91 @@ const MahkumlarPage = () => {
       ]
     }
   ];
+
+  // Waves bakiyesini al ve doğru formatta göster
+  const getWavesBalance = async () => {
+    if (window.WavesKeeper) {
+      try {
+        const state = await window.WavesKeeper.publicState();
+        if (state.account) {
+          // Waves'in kendi biriminden normal birime çevir (10^8'e böl)
+          const rawBalance = state.account.balance.available;
+          const actualBalance = (rawBalance / 100000000).toFixed(2);
+          setWavesBalance(actualBalance);
+        }
+      } catch (error) {
+        console.error('Waves bakiye hatası:', error);
+      }
+    }
+  };
+
+  // Modal açıldığında bakiyeyi güncelle
+  useEffect(() => {
+    if (isDonateModalOpen) {
+      getWavesBalance();
+    }
+  }, [isDonateModalOpen]);
+
+  // USDT'den WAVES'e dönüşüm
+  const calculateWaves = (usdtAmount) => {
+    return (parseFloat(usdtAmount) / WAVES_PRICE).toFixed(2);
+  };
+
+  // Input değiştiğinde WAVES miktarını hesapla
+  const handleDonationChange = (e) => {
+    const usdtAmount = e.target.value;
+    setDonationAmount(usdtAmount);
+    setWavesAmount(usdtAmount ? calculateWaves(usdtAmount) : '');
+  };
+
+  // Waves testnet için bağış yapma fonksiyonu
+  const handleDonate = async () => {
+    if (!window.WavesKeeper) {
+      alert('Lütfen WavesKeeper uzantısını yükleyin!');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+
+      const tx = {
+        type: 4,
+        data: {
+          amount: {
+            assetId: 'WAVES',
+            tokens: wavesAmount // WAVES miktarı
+          },
+          fee: {
+            assetId: 'WAVES',
+            tokens: '0.001'
+          },
+          recipient: '3MtZPopGzT4MXae19GpFWAeGN94zHRaFhYn'
+        }
+      };
+
+      const txData = await window.WavesKeeper.signAndPublishTransaction(tx);
+      console.log('Transaction sent:', txData);
+
+      // Bağış miktarını güncelle (USDT değeri olarak)
+      updateDonation(selectedMahkum.id, parseFloat(donationAmount));
+
+      alert('Bağış başarıyla gerçekleşti!');
+      setIsDonateModalOpen(false);
+      setDonationAmount('');
+      setWavesAmount('');
+
+    } catch (error) {
+      console.error('Bağış hatası:', error);
+      alert('Bağış işlemi başarısız oldu. Lütfen tekrar deneyin.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Sayıyı formatla (virgül ile)
+  const formatNumber = (number) => {
+    return number.toString().replace('.', ',');
+  };
 
   return (
     <div style={{
@@ -152,14 +246,14 @@ const MahkumlarPage = () => {
                     color: '#64ffda',
                     fontSize: '14px'
                   }}>
-                    Toplanan: ${mahkum.amount}
+                    Toplanan: ${(mahkumlarDonations[mahkum.id] || 0).toLocaleString()}
                   </p>
                   <p style={{ 
                     margin: 0,
                     color: '#8892b0',
                     fontSize: '14px'
                   }}>
-                    Hedef: ${mahkum.targetAmount}
+                    Hedef: ${mahkum.targetAmount.toLocaleString()}
                   </p>
                 </div>
                 <div style={{
@@ -265,7 +359,7 @@ const MahkumlarPage = () => {
                         fontWeight: 'bold',
                         textShadow: '0 0 10px rgba(100, 255, 218, 0.3)'
                       }}>
-                        ${selectedMahkum.amount}
+                        ${(mahkumlarDonations[selectedMahkum.id] || 0).toLocaleString()}
                       </p>
                     </div>
 
@@ -290,7 +384,7 @@ const MahkumlarPage = () => {
                         fontSize: '24px',
                         fontWeight: 'bold'
                       }}>
-                        ${selectedMahkum.targetAmount}
+                        ${selectedMahkum.targetAmount.toLocaleString()}
                       </p>
                     </div>
                   </div>
@@ -458,10 +552,11 @@ const MahkumlarPage = () => {
               </div>
             </div>
             
-            <button className="cyber-button" style={{ 
-              marginTop: '30px',
-              marginBottom: '20px'
-            }}>
+            <button
+              onClick={() => setIsDonateModalOpen(true)}
+              className="cyber-button"
+              style={{ marginTop: '30px' }}
+            >
               Bağış Yap
             </button>
           </div>
@@ -477,6 +572,213 @@ const MahkumlarPage = () => {
           </div>
         )}
       </div>
+
+      {/* Bağış Yapma Modal */}
+      {isDonateModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(10, 25, 47, 0.95)',
+          backdropFilter: 'blur(5px)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 9999
+        }} onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setIsDonateModalOpen(false);
+          }
+        }}>
+          <div style={{
+            backgroundColor: '#112240',
+            borderRadius: '12px',
+            padding: '30px',
+            width: '400px',
+            border: '1px solid rgba(100, 255, 218, 0.2)',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+            position: 'relative'
+          }}>
+            {/* Kapatma Butonu */}
+            <button
+              onClick={() => setIsDonateModalOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: 'none',
+                border: 'none',
+                color: '#8892b0',
+                cursor: 'pointer',
+                fontSize: '20px',
+                padding: '5px'
+              }}
+            >
+              ✕
+            </button>
+
+            {/* Modal Başlık */}
+            <h2 style={{
+              color: '#64ffda',
+              margin: '0 0 25px 0',
+              textAlign: 'center',
+              fontSize: '24px',
+              textShadow: '0 0 10px rgba(100, 255, 218, 0.3)'
+            }}>
+              Bağış Yap
+            </h2>
+
+            {/* Mahkum Bilgisi */}
+            <div style={{
+              textAlign: 'center',
+              marginBottom: '20px',
+              color: '#ccd6f6'
+            }}>
+              <p style={{ margin: '0 0 5px 0' }}>Bağış Yapılacak Kişi:</p>
+              <p style={{ 
+                margin: 0,
+                color: '#64ffda',
+                fontSize: '18px',
+                fontWeight: 'bold'
+              }}>
+                {selectedMahkum.name}
+              </p>
+            </div>
+
+            {/* Mevcut WAVES Bakiyesi */}
+            <div style={{
+              backgroundColor: 'rgba(100, 255, 218, 0.05)',
+              padding: '12px',
+              borderRadius: '4px',
+              marginBottom: '20px',
+              border: '1px solid rgba(100, 255, 218, 0.1)'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                color: '#8892b0'
+              }}>
+                <span>Mevcut WAVES:</span>
+                <span style={{ color: '#64ffda', fontWeight: 'bold' }}>
+                  {formatNumber(wavesBalance)} WAVES
+                </span>
+              </div>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                color: '#8892b0',
+                fontSize: '12px',
+                marginTop: '4px'
+              }}>
+                <span>USDT Değeri:</span>
+                <span>
+                  ≈ ${formatNumber((parseFloat(wavesBalance) * WAVES_PRICE).toFixed(2))}
+                </span>
+              </div>
+            </div>
+
+            {/* Bağış Miktarı Input */}
+            <div style={{ marginBottom: '25px' }}>
+              <label
+                style={{
+                  display: 'block',
+                  marginBottom: '10px',
+                  color: '#8892b0'
+                }}
+              >
+                Bağış Miktarı (USDT)
+              </label>
+              <input
+                type="number"
+                value={donationAmount}
+                onChange={handleDonationChange}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: 'rgba(100, 255, 218, 0.05)',
+                  border: '1px solid rgba(100, 255, 218, 0.2)',
+                  borderRadius: '4px',
+                  color: '#ccd6f6',
+                  fontSize: '16px',
+                  outline: 'none'
+                }}
+                placeholder="0.00"
+              />
+              {donationAmount && (
+                <div style={{
+                  marginTop: '10px',
+                  color: '#8892b0',
+                  fontSize: '14px',
+                  padding: '8px',
+                  backgroundColor: 'rgba(100, 255, 218, 0.05)',
+                  borderRadius: '4px'
+                }}>
+                  ≈ {formatNumber(wavesAmount)} WAVES (1 WAVES = {formatNumber(WAVES_PRICE.toFixed(2))} USDT)
+                </div>
+              )}
+            </div>
+
+            {/* Güncellenmiş Bağış Yap Butonu */}
+            <button
+              onClick={handleDonate}
+              disabled={isProcessing}
+              style={{
+                width: '100%',
+                padding: '15px',
+                backgroundColor: isProcessing ? 'rgba(100, 255, 218, 0.05)' : 'rgba(100, 255, 218, 0.1)',
+                border: '1px solid #64ffda',
+                borderRadius: '4px',
+                color: '#64ffda',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: isProcessing ? 'not-allowed' : 'pointer',
+                transition: 'all 0.3s',
+                opacity: isProcessing ? 0.7 : 1
+              }}
+              onMouseEnter={(e) => {
+                if (!isProcessing) {
+                  e.target.style.backgroundColor = 'rgba(100, 255, 218, 0.2)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isProcessing) {
+                  e.target.style.backgroundColor = 'rgba(100, 255, 218, 0.1)';
+                }
+              }}
+            >
+              {isProcessing ? 'İşlem Gerçekleşiyor...' : 'Bağış Yap'}
+            </button>
+
+            {/* Waves Testnet Bilgisi */}
+            <div style={{
+              marginTop: '20px',
+              textAlign: 'center',
+              color: '#8892b0',
+              fontSize: '12px'
+            }}>
+              <p>Bu işlem Waves Testnet üzerinde gerçekleşecektir.</p>
+              <p>Test WAVES tokenleri için{' '}
+                <a 
+                  href="https://testnet.wavesexplorer.com/faucet"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: '#64ffda',
+                    textDecoration: 'none'
+                  }}
+                >
+                  Waves Faucet
+                </a>
+                'i kullanabilirsiniz.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
