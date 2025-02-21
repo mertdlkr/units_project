@@ -16,7 +16,7 @@ const MahkumlarPage = () => {
   const [wavesAmount, setWavesAmount] = useState('');
   const [wavesBalance, setWavesBalance] = useState('0');
   const [isProcessing, setIsProcessing] = useState(false);
-  const WAVES_PRICE = 1.70; // 1 WAVES = 1.70 USDT
+  const WAVES_PRICE = 0.50; // 1 UNIT0 = 0.50 USDT
   const DONATION_ADDRESS = "0x5B121c3E0ED268c6aFe0f8E7b3bdDE5375086DB2"; // Bağış adresini buraya girin
 
   const mahkumlar = [
@@ -683,9 +683,9 @@ const MahkumlarPage = () => {
                 alignItems: 'center',
                 color: '#8892b0'
               }}>
-                <span>Mevcut WAVES:</span>
+                <span>Mevcut UNIT0:</span>
                 <span style={{ color: '#64ffda', fontWeight: 'bold' }}>
-                  {formatNumber(wavesBalance)} WAVES
+                  {formatNumber(wavesBalance)} UNIT0
                 </span>
               </div>
               <div style={{
@@ -739,7 +739,7 @@ const MahkumlarPage = () => {
                   backgroundColor: 'rgba(100, 255, 218, 0.05)',
                   borderRadius: '4px'
                 }}>
-                  ≈ {formatNumber(wavesAmount)} WAVES (1 WAVES = {formatNumber(WAVES_PRICE.toFixed(2))} USDT)
+                  ≈ {formatNumber(wavesAmount)} UNIT0 (1 UNIT0 = {formatNumber(WAVES_PRICE.toFixed(2))} USDT)
                 </div>
               )}
             </div>
@@ -782,21 +782,7 @@ const MahkumlarPage = () => {
               color: '#8892b0',
               fontSize: '12px'
             }}>
-              <p>Bu işlem Waves Testnet üzerinde gerçekleşecektir.</p>
-              <p>Test WAVES tokenleri için{' '}
-                <a 
-                  href="https://testnet.wavesexplorer.com/faucet"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    color: '#64ffda',
-                    textDecoration: 'none'
-                  }}
-                >
-                  Waves Faucet
-                </a>
-                'i kullanabilirsiniz.
-              </p>
+              <p>Bu işlem UNIT0 Testnet üzerinde gerçekleşecektir.</p>
             </div>
           </div>
         </div>
