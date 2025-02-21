@@ -16,8 +16,8 @@ const MahkumlarPage = () => {
       image: mahkum1Foto,
       description: "Kader Mahkumu - Dolandırıcılık suçundan 3 yıl hapis cezası",
       detailedDescription: "Kader mahkumu Ahmet Yılmaz, 2021 yılında işlediği dolandırıcılık suçundan dolayı 3 yıl hapis cezasına çarptırıldı. Ailesini geçindirmek için yanlış bir karar verdiğini ve pişman olduğunu belirtiyor.",
-      amount: 125,
-      targetAmount: 5000,
+      amount: 5500,
+      targetAmount: 10000,
       uyumSkoru: 85,
       performansSkoru: 90,
       yorumlar: [
@@ -32,7 +32,7 @@ const MahkumlarPage = () => {
       description: "Maddi hasarlı trafik kazası tazminatı",
       detailedDescription: "Geçirdiği trafik kazası sonucu oluşan maddi hasarı karşılayamadığı için hapis cezası aldı. Sigorta ve tazminat ödemelerini yapabilmek için yardıma ihtiyacı var.",
       amount: 250,
-      targetAmount: 7500,
+      targetAmount: 10000,
       uyumSkoru: 92,
       performansSkoru: 88,
       yorumlar: [
@@ -47,7 +47,7 @@ const MahkumlarPage = () => {
       description: "Çek ödemesi için destek talebi",
       detailedDescription: "İşletmesinin zor zamanlarında karşılıksız çek vermek zorunda kaldı. Borcunu ödemek ve özgürlüğüne kavuşmak için desteğinizi bekliyor.",
       amount: 125,
-      targetAmount: 3000,
+      targetAmount: 10000,
       uyumSkoru: 88,
       performansSkoru: 95,
       yorumlar: [
@@ -62,7 +62,7 @@ const MahkumlarPage = () => {
       description: "Sağlık masrafları için yardım talebi",
       detailedDescription: "Kronik hastalığı nedeniyle ihtiyaç duyduğu ilaçları karşılayamadığı için borçlandı ve hapis cezası aldı. Sağlık masraflarını karşılayabilmek için yardıma ihtiyacı var.",
       amount: 175,
-      targetAmount: 4500,
+      targetAmount: 10000,
       uyumSkoru: 95,
       performansSkoru: 87,
       yorumlar: [
@@ -72,16 +72,16 @@ const MahkumlarPage = () => {
     },
     {
       id: 5,
-      name: "Mustafa Şahin",
+      name: "Eyüp Uzun",
       image: mahkum5Foto,
       description: "İcra borcu için destek bekliyor",
       detailedDescription: "Ekonomik kriz döneminde işini kaybetti ve birikmiş borçlarını ödeyemedi. İcra takibi sonucu hapis cezası aldı. Ailesine kavuşabilmek için desteğinizi bekliyor.",
       amount: 200,
-      targetAmount: 6000,
+      targetAmount: 10000,
       uyumSkoru: 91,
       performansSkoru: 93,
       yorumlar: [
-        { isim: "Kemal D.", yorum: "Mustafa Bey cezaevi mutfağında çalışıyor ve herkesin takdirini kazanıyor." },
+        { isim: "Fatih A.", yorum: "Eyüp Bey cezaevi mutfağında çalışıyor ve herkesin takdirini kazanıyor." },
         { isim: "Ahmet F.", yorum: "Çok çalışkan ve azimli biri. Sürekli yeni şeyler öğrenmeye çalışıyor." }
       ]
     }
@@ -164,7 +164,8 @@ const MahkumlarPage = () => {
                 </div>
                 <div style={{
                   display: 'flex',
-                  gap: '15px'
+                  gap: '15px',
+                  marginBottom: '15px'
                 }}>
                   <p style={{ 
                     margin: 0,
@@ -181,6 +182,17 @@ const MahkumlarPage = () => {
                     Performans: {mahkum.performansSkoru}/100
                   </p>
                 </div>
+                <p style={{
+                  margin: 0,
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: mahkum.id <= 3 ? '#64ffda' : '#ff6b6b',
+                  textShadow: mahkum.id <= 3 ? 
+                    '0 0 5px rgba(100, 255, 218, 0.3)' : 
+                    '0 0 5px rgba(255, 107, 107, 0.3)'
+                }}>
+                  Durum: {mahkum.id <= 3 ? 'Denetimli Serbest' : 'Hapiste'}
+                </p>
               </div>
             </div>
           ))}
@@ -197,13 +209,12 @@ const MahkumlarPage = () => {
         {selectedMahkum ? (
           <div style={{
             height: 'auto',
-            paddingBottom: '40px',
-            maxWidth: '100%'
+            paddingBottom: '40px'
           }}>
             <div style={{
               display: 'flex',
               gap: '30px',
-              marginBottom: '40px'
+              marginBottom: '25px'
             }}>
               <img
                 src={selectedMahkum.image}
@@ -221,7 +232,7 @@ const MahkumlarPage = () => {
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '30px'
+                gap: '20px'
               }}>
                 <div style={{
                   display: 'flex',
@@ -343,32 +354,57 @@ const MahkumlarPage = () => {
                   </div>
                 </div>
 
+                {/* İsim ve Durum - Title'sız kutular */}
                 <div style={{
-                  textAlign: 'center',
-                  padding: '20px',
-                  backgroundColor: 'rgba(100, 255, 218, 0.05)',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(100, 255, 218, 0.1)',
-                  width: '330px',
-                  margin: '0 auto'
+                  marginTop: '10px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '15px'
                 }}>
-                  <h2 style={{
-                    margin: 0,
-                    color: '#64ffda',
-                    fontSize: '32px',
-                    fontWeight: 'bold',
-                    textShadow: '0 0 15px rgba(100, 255, 218, 0.3)',
-                    letterSpacing: '1px'
+                  {/* İsim Kutusu */}
+                  <div style={{
+                    padding: '20px',
+                    backgroundColor: 'rgba(100, 255, 218, 0.05)',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(100, 255, 218, 0.1)',
+                    textAlign: 'center'
                   }}>
-                    {selectedMahkum.name}
-                  </h2>
+                    <h2 style={{
+                      color: '#64ffda',
+                      textShadow: '0 0 10px rgba(100, 255, 218, 0.3)',
+                      margin: 0,
+                      fontSize: '24px'
+                    }}>
+                      {selectedMahkum.name}
+                    </h2>
+                  </div>
+
+                  {/* Durum Kutusu */}
+                  <div style={{
+                    padding: '20px',
+                    backgroundColor: selectedMahkum.id <= 3 ? 'rgba(100, 255, 218, 0.05)' : 'rgba(255, 107, 107, 0.05)',
+                    borderRadius: '8px',
+                    border: `1px solid ${selectedMahkum.id <= 3 ? 'rgba(100, 255, 218, 0.1)' : 'rgba(255, 107, 107, 0.1)'}`,
+                    textAlign: 'center'
+                  }}>
+                    <div style={{
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      color: selectedMahkum.id <= 3 ? '#64ffda' : '#ff6b6b',
+                      textShadow: selectedMahkum.id <= 3 ? 
+                        '0 0 5px rgba(100, 255, 218, 0.3)' : 
+                        '0 0 5px rgba(255, 107, 107, 0.3)'
+                    }}>
+                      {selectedMahkum.id <= 3 ? 'Denetimli Serbest' : 'Hapiste'}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             <p style={{ 
               lineHeight: '1.6',
-              color: '#8892b0',
+              color: '#ccd6f6',
               marginBottom: '30px',
               fontSize: '16px'
             }}>

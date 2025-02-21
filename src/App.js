@@ -10,26 +10,37 @@ import logo from './assets/logo.png'; // Logo import
 
 function App() {
   const [displayedAmount, setDisplayedAmount] = useState(0);
-  const collectedAmount = 125 + 250 + 125 + 175 + 200; // Tüm mahkumların toplanan paraları
+  const totalAmount = 875;
+  const formatAmount = (amount) => {
+    return new Intl.NumberFormat('en-US').format(Math.floor(amount));
+  };
 
   useEffect(() => {
-    const duration = 2000; // 2 saniye sürecek
-    const steps = 60; // Kaç adımda artacak
-    const stepValue = collectedAmount / steps;
-    const stepDuration = duration / steps;
+    let startTime;
+    let animationFrameId;
 
-    let currentStep = 0;
-    const timer = setInterval(() => {
-      currentStep++;
-      if (currentStep <= steps) {
-        setDisplayedAmount(Math.min(stepValue * currentStep, collectedAmount));
+    const animate = (currentTime) => {
+      if (!startTime) startTime = currentTime;
+      const progress = (currentTime - startTime) / 2000;
+
+      if (progress < 1) {
+        const speedFactor = Math.max(1, Math.log10(totalAmount) / 2);
+        const easedProgress = 1 - Math.pow(1 - progress, speedFactor);
+        setDisplayedAmount(totalAmount * easedProgress);
+        animationFrameId = requestAnimationFrame(animate);
       } else {
-        clearInterval(timer);
+        setDisplayedAmount(totalAmount);
       }
-    }, stepDuration);
+    };
 
-    return () => clearInterval(timer);
-  }, [collectedAmount]);
+    animationFrameId = requestAnimationFrame(animate);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [totalAmount]);
 
   return (
     <Router>
@@ -116,7 +127,7 @@ function App() {
                 <div style={{
                   textAlign: 'center',
                   position: 'relative',
-                  padding: '30px'
+                  padding: '40px'
                 }}>
                   {/* Arka plan şekli */}
                   <div style={{
@@ -142,22 +153,35 @@ function App() {
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
-                    gap: '20px'
+                    gap: '25px'
                   }}>
-                    <img 
-                      src={logo} 
-                      alt="Logo" 
-                      style={{
-                        height: '60px',
-                        width: 'auto',
-                        filter: 'drop-shadow(0 0 8px rgba(100, 255, 218, 0.5))',
-                        marginBottom: '10px'
-                      }}
-                    />
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      marginBottom: '15px'
+                    }}>
+                      <FontAwesomeIcon 
+                        icon={faMoneyBill} 
+                        style={{ 
+                          fontSize: '32px',
+                          filter: 'drop-shadow(0 0 5px rgba(100, 255, 218, 0.5))',
+                          color: '#64ffda'
+                        }} 
+                      />
+                      <h1 style={{
+                        margin: 0,
+                        fontSize: '36px',
+                        color: '#64ffda',
+                        textShadow: '0 0 10px rgba(100, 255, 218, 0.3)'
+                      }}>
+                        SecondChance
+                      </h1>
+                    </div>
                     <h2 style={{
                       color: '#64ffda',
-                      fontSize: '24px',
-                      marginBottom: '5px',
+                      fontSize: '28px',
+                      marginBottom: '10px',
                       textShadow: '0 0 10px rgba(100, 255, 218, 0.3)'
                     }}>
                       Toplam Toplanan Para
@@ -168,7 +192,7 @@ function App() {
                       color: '#64ffda',
                       textShadow: '0 0 20px rgba(100, 255, 218, 0.5)'
                     }}>
-                      ${Math.floor(displayedAmount)}
+                      ${formatAmount(displayedAmount)}
                     </div>
                   </div>
                 </div>
